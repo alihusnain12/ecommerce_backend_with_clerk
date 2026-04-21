@@ -1,0 +1,14 @@
+/.vscode
+/node_modules
+./dist
+
+*.env
+.env
+.env.*
+package-lock.json
+yarn.lock
+package.json
+tsconfig.json
+tsconfig.*.json
+.prettierignore
+.prettier*
