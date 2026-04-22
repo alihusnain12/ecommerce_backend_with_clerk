@@ -1,53 +1,131 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express'; // Use 'import type'
 import jwt from 'jsonwebtoken';
-import TokenBlocklist from '../models/tokenBlocklist.model.ts';
+import User from '../models/user.model.ts';
 
-const authenticateUser = async (
-   req: Request,
-   res: Response,
-   next: NextFunction
-): Promise<void> => {
-   try {
-      // Support both cookie-based and header-based Bearer token
-      const authHeader: string | undefined =
-         req.cookies?.Authorization ?? req.headers['authorization'];
+// 
+// EXTEND EXPRESS REQUEST TYPE
+// 
 
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-         res.status(401).json({ message: 'Unauthorized: No token provided' });
-         return;
-      }
-
-      const token = authHeader.split(' ')[1];
-
-      // Check if token has been invalidated (logged out)
-      const isBlocked = await TokenBlocklist.findOne({ token });
-      if (isBlocked) {
-         res.status(401).json({
-            message: 'Unauthorized: Token has been invalidated',
-         });
-         return;
-      }
-
-      // Verify and decode — cast to global ITokenPayload
-      const decoded = jwt.verify(
-         token,
-         process.env.ACCESS_TOKEN_SECRET! // must match the secret used in generateAccessToken()
-      ) as ITokenPayload;
-
-      // Attach user info to request using the global IAuthUser shape
-      req.user = {
-         id: decoded._id,
-         _id: decoded._id,
-         email: decoded.email,
-         role: decoded.role,
+/**
+ * We attach the decoded user object to req.user after verifying the JWT.
+ * This declaration merges with Express's Request interface globally so
+ * every controller can access req.user without casting.
+ */
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        _id: string;
+        email: string;
+        role: 'user' | 'vendor' | 'admin';
       };
+    }
+  }
+}
 
-      next();
-   } catch (error) {
-      res.status(401).json({
-         message: 'Unauthorized: Invalid or expired token',
-      });
-   }
+// 
+// protect - verifies the JWT access token
+// 
+
+/**
+ * protect: must run on every route that requires authentication.
+ *
+ * Flow:
+ *  1. Read the Bearer token from the Authorization header
+ *  2. Verify it with the ACCESS_TOKEN_SECRET
+ *  3. Attach the decoded payload to req.user
+ *  4. Call next() so the actual controller runs
+ *
+ * If anything is wrong (missing, expired, tampered) we return 401.
+ */
+export const protect = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    // Authorization header must be present and in format "Bearer <token>"
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
+      return;
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    // jwt.verify throws if the token is expired or the signature doesn't match
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as {
+      _id: string;
+      email: string;
+      role: 'user' | 'vendor' | 'admin';
+    };
+
+    // Optionally re-fetch from DB to confirm the user still exists and is verified.
+    // This adds one DB query per request but catches cases like deleted accounts.
+    const user = await User.findById(decoded._id).select('_id email role isVerified');
+    if (!user) {
+      res.status(401).json({ success: false, message: 'User no longer exists.' });
+      return;
+    }
+    if (!user.isVerified) {
+      res.status(403).json({ success: false, message: 'Please verify your email first.' });
+      return;
+    }
+
+    // Attach to request so downstream middleware and controllers can use it
+    req.user = { _id: String(user._id), email: user.email, role: user.role };
+    next();
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      res.status(401).json({ success: false, message: 'Token expired. Please log in again.' });
+    } else {
+      res.status(401).json({ success: false, message: 'Invalid token.' });
+    }
+  }
 };
 
-export default authenticateUser;
+// 
+// ROLE GUARDS
+// 
+
+/**
+ * isVendor: allows only users with role === 'vendor'.
+ * Must come AFTER protect in the middleware chain so req.user is set.
+ *
+ * Usage:
+ *   router.post('/products', protect, isVendor, createProduct)
+ */
+export const isVendor = (req: Request, res: Response, next: NextFunction): void => {
+  if (req.user?.role !== 'vendor') {
+    res.status(403).json({ success: false, message: 'Access denied. Vendors only.' });
+    return;
+  }
+  next();
+};
+
+/**
+ * isAdmin: allows only users with role === 'admin'.
+ *
+ * Usage:
+ *   router.get('/admin/orders', protect, isAdmin, getAllOrders)
+ */
+export const isAdmin = (req: Request, res: Response, next: NextFunction): void => {
+  if (req.user?.role !== 'admin') {
+    res.status(403).json({ success: false, message: 'Access denied. Admins only.' });
+    return;
+  }
+  next();
+};
+
+/**
+ * isVendorOrAdmin: allows either vendors or admins.
+ * Useful for routes like "get order item details" where both roles are valid.
+ */
+export const isVendorOrAdmin = (req: Request, res: Response, next: NextFunction): void => {
+  if (req.user?.role !== 'vendor' && req.user?.role !== 'admin') {
+    res.status(403).json({ success: false, message: 'Access denied.' });
+    return;
+  }
+  next();
+};
+
+// Default export for backward compatibility
+export { protect as authenticateUser };
+export default protect;

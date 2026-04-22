@@ -227,7 +227,7 @@ const orderItemSchema = new mongoose.Schema<IOrderItem>(
 orderItemSchema.index({ vendor: 1, itemStatus: 1, createdAt: -1 });
 
 // Fetching all line items for a specific order (buyer's receipt, admin view)
-orderItemSchema.index({ order: 1 });
+// Note: Index already created by index: true on order field
 
 // Compound: useful when a vendor filters their items within a specific order
 orderItemSchema.index({ order: 1, vendor: 1 });

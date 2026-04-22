@@ -302,6 +302,105 @@ const clerkLogin = asyncHandler(
 );
 
 /**
+ * @desc    Sync with existing Clerk session (for users already signed in)
+ * @route   POST /api/users/clerk-sync
+ * @access  Public (Clerk token required)
+ */
+const clerkSync = asyncHandler(
+   async (req: Request, res: Response): Promise<any> => {
+      const clerkId = req.clerkId;
+      const { role = 'user' } = req.body;
+
+      if (!clerkId) {
+         throw new ApiError(401, 'Unauthorized: No valid Clerk session found');
+      }
+
+      if (!['user', 'vendor'].includes(role)) {
+         throw new ApiError(400, 'Invalid role. Must be user or vendor');
+      }
+
+      // Fetch user data from Clerk
+      try {
+         const clerkUser = await clerkClient.users.getUser(clerkId);
+
+         const email = clerkUser.emailAddresses.find(
+            (e) => e.id === clerkUser.primaryEmailAddressId
+         )?.emailAddress;
+
+         if (!email) {
+            throw new ApiError(400, 'No email address found on this Clerk account');
+         }
+
+         const name =
+            [clerkUser.firstName, clerkUser.lastName]
+               .filter(Boolean)
+               .join(' ')
+               .trim() || email.split('@')[0];
+
+         // Check if user exists by email or clerkId
+         let user = await User.findOne({
+            $or: [{ clerkId }, { email }]
+         });
+
+         if (user) {
+            // Update existing user info
+            user.name = name;
+            user.isVerified = true;
+            if (role) user.role = role;
+            if (!user.clerkId) user.clerkId = clerkId;
+            await user.save();
+         } else {
+            // Create new user
+            user = await User.create({
+               clerkId,
+               name,
+               email,
+               password: crypto.randomBytes(16).toString('hex'),
+               isVerified: true,
+               role,
+            });
+         }
+
+         const tokens = await generateAccessAndRefreshTokens(user._id.toString());
+
+         return res.json(
+            new ApiResponse(200, {
+               accessToken: tokens.accessToken,
+               refreshToken: tokens.refreshToken,
+               user: {
+                  _id: user._id,
+                  name: user.name,
+                  email: user.email,
+                  role: user.role,
+                  isVerified: user.isVerified,
+               },
+            }, 'Clerk sync successful')
+         );
+      } catch (error: any) {
+         // If Clerk user fetch fails, try to find existing user by clerkId
+         const user = await User.findOne({ clerkId });
+         if (user) {
+            const tokens = await generateAccessAndRefreshTokens(user._id.toString());
+            return res.json(
+               new ApiResponse(200, {
+                  accessToken: tokens.accessToken,
+                  refreshToken: tokens.refreshToken,
+                  user: {
+                     _id: user._id,
+                     name: user.name,
+                     email: user.email,
+                     role: user.role,
+                     isVerified: user.isVerified,
+                  },
+               }, 'Clerk sync successful (cached)')
+            );
+         }
+         throw new ApiError(401, 'Failed to sync with Clerk session');
+      }
+   }
+);
+
+/**
  * @desc    Update user details
  * @route   PUT /api/users/update
  * @access  Private
@@ -344,5 +443,6 @@ export {
    logoutUser,
    getMe,
    clerkLogin,
+   clerkSync,
    updateUserDetails,
 };

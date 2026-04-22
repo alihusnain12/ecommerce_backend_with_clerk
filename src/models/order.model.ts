@@ -194,7 +194,7 @@ const orderSchema = new mongoose.Schema<IOrder>(
 orderSchema.index({ paymentStatus: 1, orderStatus: 1 });
 
 // Stripe webhook lookup: match incoming event to an Order
-orderSchema.index({ stripePaymentIntentId: 1 });
+// Note: Index already created by unique: true on stripePaymentIntentId field
 
 // ─────────────────────────────────────────────
 // MODEL EXPORT

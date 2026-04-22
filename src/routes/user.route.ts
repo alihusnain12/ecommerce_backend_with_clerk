@@ -6,6 +6,7 @@ import {
    logoutUser,
    getMe,
    clerkLogin,
+   clerkSync,
    updateUserDetails,
 } from '../controllers/user.controller.ts';
 import authenticateUser from '../middlewares/auth.middleware.ts';
@@ -42,6 +43,13 @@ router.post('/login', loginUser);
  * @access  Public (Clerk token required)
  */
 router.post('/clerk-login', verifyClerkToken, clerkLogin);
+
+/**
+ * @route   POST /api/users/clerk-sync
+ * @desc    Sync with existing Clerk session (for users already signed in)
+ * @access  Public (Clerk token required)
+ */
+router.post('/clerk-sync', verifyClerkToken, clerkSync);
 
 // Protected Routes (Authentication Required)
 
