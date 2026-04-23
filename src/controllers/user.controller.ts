@@ -401,6 +401,50 @@ const clerkSync = asyncHandler(
 );
 
 /**
+ * @desc    Admin login using .env credentials
+ * @route   POST /api/users/admin-login
+ * @access  Public
+ */
+const adminLogin = asyncHandler(
+   async (req: Request, res: Response): Promise<any> => {
+      const { email, password } = req.body;
+
+      // Validate against .env admin credentials
+      const adminEmail = process.env.ADMIN_EMAIL;
+      const adminPassword = process.env.ADMIN_PASSWORD;
+
+      if (!adminEmail || !adminPassword) {
+         throw new ApiError(500, 'Admin credentials not configured');
+      }
+
+      if (email !== adminEmail || password !== adminPassword) {
+         throw new ApiError(401, 'Invalid admin credentials');
+      }
+
+      // Create admin user object (no DB record needed)
+      const adminUser = {
+         _id: 'admin_system',
+         name: 'System Administrator',
+         email: adminEmail,
+         role: 'admin',
+         isVerified: true,
+      };
+
+      // Generate tokens for admin
+      const accessToken = crypto.randomBytes(32).toString('hex');
+      const refreshToken = crypto.randomBytes(32).toString('hex');
+
+      return res.json(
+         new ApiResponse(200, {
+            accessToken,
+            refreshToken,
+            user: adminUser,
+         }, 'Admin login successful')
+      );
+   }
+);
+
+/**
  * @desc    Update user details
  * @route   PUT /api/users/update
  * @access  Private
@@ -444,5 +488,6 @@ export {
    getMe,
    clerkLogin,
    clerkSync,
+   adminLogin,
    updateUserDetails,
 };

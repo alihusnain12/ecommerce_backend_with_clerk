@@ -7,6 +7,7 @@ import {
    getMe,
    clerkLogin,
    clerkSync,
+   adminLogin,
    updateUserDetails,
 } from '../controllers/user.controller.ts';
 import authenticateUser from '../middlewares/auth.middleware.ts';
@@ -36,6 +37,13 @@ router.post('/verify-otp', verifyOtp);
  * @access  Public
  */
 router.post('/login', loginUser);
+
+/**
+ * @route   POST /api/users/admin-login
+ * @desc    Admin login using .env credentials
+ * @access  Public
+ */
+router.post('/admin-login', adminLogin);
 
 /**
  * @route   POST /api/users/clerk-login

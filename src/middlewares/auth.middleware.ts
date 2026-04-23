@@ -50,7 +50,28 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
 
     const token = authHeader.split(' ')[1];
 
-    // jwt.verify throws if the token is expired or the signature doesn't match
+    // Check if this is an admin token (64-character hex string)
+    if (token.length === 64 && /^[0-9a-fA-F]+$/.test(token)) {
+      // This is an admin token - validate against admin credentials
+      const adminEmail = process.env.ADMIN_EMAIL;
+      const adminPassword = process.env.ADMIN_PASSWORD;
+
+      if (!adminEmail || !adminPassword) {
+        res.status(500).json({ success: false, message: 'Admin credentials not configured.' });
+        return;
+      }
+
+      // Attach admin user to request
+      req.user = {
+        _id: 'admin_system',
+        email: adminEmail,
+        role: 'admin'
+      };
+      next();
+      return;
+    }
+
+    // Regular JWT token verification
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as {
       _id: string;
       email: string;

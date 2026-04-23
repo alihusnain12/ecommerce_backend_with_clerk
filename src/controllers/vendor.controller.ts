@@ -151,7 +151,7 @@ export const createStripeAccount = async (req: Request, res: Response): Promise<
       return_url: `${process.env.FRONTEND_URL}/vendor/stripe/return`,
       type: 'account_onboarding',
     });
-    } // Added missing closing brace here
+    }
 
     res.status(200).json({
       success: true,
