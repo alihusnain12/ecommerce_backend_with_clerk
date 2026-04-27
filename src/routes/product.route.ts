@@ -7,9 +7,9 @@ import {
   updateProduct,
   deleteProduct,
   adminGetAllProducts,
-} from '../controllers/product.controller.ts';
-import { protect, isVendor, isAdmin } from '../middlewares/auth.middleware.ts';
-import { multerUpload } from '../config/cloudinary.ts';
+} from '../controllers/product.controller';
+import { protect, isVendor, isAdmin } from '../middlewares/auth.middleware';
+import { multerUpload } from '../config/cloudinary';
 
 // ─────────────────────────────────────────────
 // PRODUCT ROUTER

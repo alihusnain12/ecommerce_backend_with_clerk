@@ -8,8 +8,8 @@ import {
   updateItemStatus,
   adminGetAllOrders,
   refundOrderItem,
-} from '../controllers/order.controller.ts';
-import { protect, isVendor, isAdmin } from '../middlewares/auth.middleware.ts';
+} from '../controllers/order.controller';
+import { protect, isVendor, isAdmin } from '../middlewares/auth.middleware';
 import express from 'express';
 
 // ─────────────────────────────────────────────

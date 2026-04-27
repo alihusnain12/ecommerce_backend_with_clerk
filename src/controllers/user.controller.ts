@@ -1,12 +1,12 @@
-import User from '../models/user.model.ts';
-import PendingRegistration from '../models/pendingRegistration.model.ts';
-import { ApiError } from '../utils/ApiError.ts';
-import { asyncHandler } from '../utils/asyncHandler.ts';
-import { ApiResponse } from '../utils/ApiResponse.ts';
-import { sendOtpEmail } from '../utils/sendOtp.ts';
+import User from '../models/user.model';
+import PendingRegistration from '../models/pendingRegistration.model';
+import { ApiError } from '../utils/ApiError';
+import { asyncHandler } from '../utils/asyncHandler';
+import { ApiResponse } from '../utils/ApiResponse';
+import { sendOtpEmail } from '../utils/sendOtp';
 import type { Request, Response } from 'express';
 import crypto from 'crypto';
-import TokenBlocklist from '../models/tokenBlocklist.model.ts';
+import TokenBlocklist from '../models/tokenBlocklist.model';
 import { clerkClient, getAuth } from '@clerk/express';
 
 // ─── Token helpers ─────────────────────────────────────────────────────────────

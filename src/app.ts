@@ -1,15 +1,15 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { limiter } from "./config/rateLimiter.ts";
+import { limiter } from "./config/rateLimiter";
 
 const app = express();
 
 // Routes
-import UserRouter from "./routes/user.route.ts";
-import ProductRouter from "./routes/product.route.ts";
-import OrderRouter from "./routes/order.route.ts";
-import VendorRouter from "./routes/vendor.route.ts";
+import UserRouter from "./routes/user.route";
+import ProductRouter from "./routes/product.route";
+import OrderRouter from "./routes/order.route";
+import VendorRouter from "./routes/vendor.route";
 
 // Stripe webhook routes - must be before express.json()
 app.use("/api/orders/webhook", 

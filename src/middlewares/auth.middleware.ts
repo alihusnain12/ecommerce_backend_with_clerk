@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'; // Use 'import type'
 import jwt from 'jsonwebtoken';
-import User from '../models/user.model.ts';
+import User from '../models/user.model';
 
 // 
 // EXTEND EXPRESS REQUEST TYPE

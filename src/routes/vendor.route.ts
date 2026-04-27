@@ -6,8 +6,8 @@ import {
   getStripeStatus,
   getVendorDashboard,
   adminGetAllVendors,
-} from '../controllers/vendor.controller.ts';
-import { protect, isVendor, isAdmin } from '../middlewares/auth.middleware.ts';
+} from '../controllers/vendor.controller';
+import { protect, isVendor, isAdmin } from '../middlewares/auth.middleware';
 import express from 'express';
 
 // ─────────────────────────────────────────────

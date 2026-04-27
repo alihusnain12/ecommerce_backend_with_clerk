@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import Product from '../models/product.model.ts';
-import { deleteFromCloudinary, extractPublicId } from '../config/cloudinary.ts';
+import Product from '../models/product.model';
+import { deleteFromCloudinary, extractPublicId } from '../config/cloudinary';
 
 // ─────────────────────────────────────────────
 // TYPES

@@ -1,9 +1,8 @@
 import type { Request, Response } from 'express';
 import Stripe from 'stripe';
-import Order from '../models/order.model.ts';
-import OrderItem from '../models/orderItem.model.ts';
-import Product from '../models/product.model.ts';
-import User from '../models/user.model.ts';
+import Order from '../models/order.model';
+import OrderItem from '../models/orderItem.model';
+import Product from '../models/product.model';
 
 // ─────────────────────────────────────────────
 // STRIPE INITIALISATION

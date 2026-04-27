@@ -9,9 +9,9 @@ import {
    clerkSync,
    adminLogin,
    updateUserDetails,
-} from '../controllers/user.controller.ts';
-import authenticateUser from '../middlewares/auth.middleware.ts';
-import verifyClerkToken from '../middlewares/clerk.middelware.ts';
+} from '../controllers/user.controller';
+import authenticateUser from '../middlewares/auth.middleware';
+import verifyClerkToken from '../middlewares/clerk.middelware';
 
 const router = Router();
 
